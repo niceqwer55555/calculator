@@ -5,7 +5,7 @@ go 1.17
 require fyne.io/fyne/v2 v2.6.0
 
 require (
-    github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5  // indirect
+    github.com/ginuerzh/gosocks5 v1.0.2  // indirect
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
