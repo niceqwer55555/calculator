@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fyne.io/fyne/v2"
+	"calculator/socks5server"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/fyne-io/calculator/socks5server"
 	"log"
 	"time"
 )
