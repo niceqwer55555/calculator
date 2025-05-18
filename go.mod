@@ -9,7 +9,6 @@ require (
 )
 
 require (
-    github.com/ginuerzh/gosocks5 v1.0.2  // indirect
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
