@@ -5,56 +5,94 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/fyne-io/calculator/oneapi"
+	"github.com/fyne-io/calculator/socks5server"
+	"log"
+	"time"
 )
 
-func main() {
-	a := app.New()
-	w := a.NewWindow("One-API控制器")
+type ServiceController struct {
+	server   *socks5server.Server
+	startBtn *widget.Button
+	stopBtn  *widget.Button
+	status   *widget.Label
+}
 
-	// 配置参数
-	cfg := oneapi.Config{
-		Port:     8080,
-		APIToken: "123456",
+func NewServiceController() *ServiceController {
+	cfg := socks5server.Config{
+		Port:        1080,
+		Username:    "admin",
+		Password:    "123456",
+		IdleTimeout: 30 * time.Minute,
+	}
+	server, _ := socks5server.New(cfg)
+
+	return &ServiceController{
+		server: server,
+	}
+}
+
+func (sc *ServiceController) createUI() fyne.CanvasObject {
+	sc.startBtn = widget.NewButtonWithIcon("启动代理", theme.MediaPlayIcon(), nil)
+	sc.stopBtn = widget.NewButtonWithIcon("停止代理", theme.MediaStopIcon(), nil)
+	sc.status = widget.NewLabel("服务状态: 已停止")
+
+	sc.startBtn.OnTapped = func() {
+		go func() {
+			if err := sc.server.Start(); err != nil {
+				log.Println("启动失败:", err)
+			}
+			sc.updateUI()
+		}()
 	}
 
-	// UI组件
-	statusLabel := widget.NewLabel("服务状态: 未运行")
-	startBtn := widget.NewButton("启动服务", nil)
-	stopBtn := widget.NewButton("停止服务", nil)
-	stopBtn.Disable()
-
-	// 按钮逻辑
-	startBtn.OnTapped = func() {
-		if err := oneapi.Start(cfg); err != nil {
-			statusLabel.SetText("启动失败: " + err.Error())
-		} else {
-			statusLabel.SetText("服务状态: 运行中 (端口 8080)")
-			startBtn.Disable()
-			stopBtn.Enable()
-		}
+	sc.stopBtn.OnTapped = func() {
+		go func() {
+			if err := sc.server.Stop(); err != nil {
+				log.Println("停止失败:", err)
+			}
+			sc.updateUI()
+		}()
 	}
 
-	stopBtn.OnTapped = func() {
-		if err := oneapi.Stop(); err != nil {
-			statusLabel.SetText("停止失败: " + err.Error())
-		} else {
-			statusLabel.SetText("服务状态: 已停止")
-			startBtn.Enable()
-			stopBtn.Disable()
-		}
-	}
-
-	// 布局
-	controls := container.NewGridWithColumns(2, startBtn, stopBtn)
-	content := container.NewVBox(
-		statusLabel,
-		layout.NewSpacer(),
-		controls,
+	sc.updateUI()
+	return container.NewVBox(
+		container.NewHBox(
+			sc.startBtn,
+			sc.stopBtn,
+			layout.NewSpacer(),
+			sc.status,
+		),
+		widget.NewSeparator(),
 	)
+}
 
-	w.SetContent(content)
-	w.Resize(fyne.NewSize(300, 300))
-	w.ShowAndRun()
+func (sc *ServiceController) updateUI() {
+	switch sc.server.Status() {
+	case "running":
+		sc.status.SetText("服务状态: 运行中 (端口 1080)")
+		sc.startBtn.Disable()
+		sc.stopBtn.Enable()
+	case "stopped":
+		sc.status.SetText("服务状态: 已停止")
+		sc.startBtn.Enable()
+		sc.stopBtn.Disable()
+	case "error":
+		sc.status.SetText("服务状态: 异常")
+		sc.startBtn.Enable()
+		sc.stopBtn.Disable()
+	}
+}
+
+func main() {
+	app := app.New()
+	window := app.NewWindow("SOCKS5代理控制器")
+
+	controller := NewServiceController()
+	content := controller.createUI()
+
+	window.SetContent(content)
+	window.Resize(fyne.NewSize(400, 200))
+	window.ShowAndRun()
 }
